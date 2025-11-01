@@ -14,8 +14,8 @@ type StatsHandler struct {
 	db *gorm.DB
 }
 
-func InitStatsHandler(db *gorm.DB) *StatsHandler {
-	return &StatsHandler{db: db}
+func InitStatsHandler(dbParam *gorm.DB) *StatsHandler {
+	return &StatsHandler{db: dbParam}
 }
 
 func (handler *StatsHandler) GetStats(ginContext *gin.Context) {
@@ -24,13 +24,13 @@ func (handler *StatsHandler) GetStats(ginContext *gin.Context) {
 
 	result, err := gorm.G[models.StatsData](handler.db).Where("id = ?", 1).First(ctx)
 	if err != nil {
-		ginContext.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve stats"})
+		ginContext.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve stats"})
 		return
 	}
 
 	stats = result
 
-	ginContext.IndentedJSON(http.StatusOK, stats)
+	ginContext.JSON(http.StatusOK, stats)
 }
 
 func (handler *StatsHandler) RefreshStats(ginContext *gin.Context) {
@@ -42,8 +42,8 @@ func (handler *StatsHandler) RefreshStats(ginContext *gin.Context) {
 	now := time.Now()
 	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	endOfDay := startOfDay.Add(24 * time.Hour)
-	sevenDaysAgo := startOfDay.Add(-24*7*time.Hour)
-	yesterday := startOfDay.Add(-10*time.Minute)
+	sevenDaysAgo := startOfDay.Add(-24 * 7 * time.Hour)
+	yesterday := startOfDay.Add(-10 * time.Minute)
 	ctx := context.Background()
 
 	handler.db.Model(&models.LeadsData{}).Count(&leadsAlltimeCount)
@@ -51,16 +51,16 @@ func (handler *StatsHandler) RefreshStats(ginContext *gin.Context) {
 	handler.db.Model(&models.LeadsData{}).Where("created_at BETWEEN ? AND ?", sevenDaysAgo, yesterday).Count(&followUpTodayCount)
 
 	updated, err := gorm.G[models.StatsData](handler.db).Where("id = ?", 1).Updates(ctx, models.StatsData{
-		LeadsAlltime: int(leadsAlltimeCount), 
-		LeadsDaily: int(leadsTodayCount), 
-		FollowUpToday: int(followUpTodayCount), 
+		LeadsAlltime:  int(leadsAlltimeCount),
+		LeadsDaily:    int(leadsTodayCount),
+		FollowUpToday: int(followUpTodayCount),
 		DealsAlltime:  int(dealsAlltimeCount),
 	})
 
 	if err != nil {
-		ginContext.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "Failed to update stats"})
+		ginContext.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update stats"})
 		return
 	}
 
-	ginContext.IndentedJSON(http.StatusOK, gin.H{"updated": updated})
+	ginContext.JSON(http.StatusOK, gin.H{"updated": updated})
 }
