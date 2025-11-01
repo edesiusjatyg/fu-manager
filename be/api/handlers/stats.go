@@ -24,6 +24,22 @@ func (handler *StatsHandler) GetStats(ginContext *gin.Context) {
 
 	result, err := gorm.G[models.StatsData](handler.db).Where("id = ?", 1).First(ctx)
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			defaultStats := models.StatsData{
+				LeadsAlltime:  0,
+				LeadsDaily:    0,
+				FollowUpToday: 0,
+				DealsAlltime:  0,
+			}
+			createErr := gorm.G[models.StatsData](handler.db).Create(ctx, &defaultStats)
+			if createErr != nil {
+				ginContext.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize stats"})
+				return
+			}
+			stats = defaultStats
+			ginContext.JSON(http.StatusOK, stats)
+			return
+		}
 		ginContext.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve stats"})
 		return
 	}

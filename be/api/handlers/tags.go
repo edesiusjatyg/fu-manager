@@ -24,7 +24,13 @@ func (handler *TagsHandler) GetTags(ginContext *gin.Context) {
 
 	result, err := gorm.G[models.LeadsTags](handler.db).Find(ctx)
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			ginContext.JSON(http.StatusNotFound, gin.H{"error": "No tags found"})
+			return
+		}
+
 		ginContext.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve tags"})
+		return
 	}
 
 	tags = result
@@ -45,7 +51,13 @@ func (handler *TagsHandler) GetTag(ginContext *gin.Context) {
 
 	result, err := gorm.G[models.LeadsTags](handler.db).Where("id = ?", id).First(ctx)
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			ginContext.JSON(http.StatusNotFound, gin.H{"error": "No tag found with ID"})
+			return
+		}
+
 		ginContext.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve tag with id"})
+		return
 	}
 
 	tag = result

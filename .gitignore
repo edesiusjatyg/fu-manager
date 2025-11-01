@@ -1,2 +1,8 @@
 .env
-.env.*
+
+Dockerfile
+dockerfile
+docker-compose.yml
+docker-compose.*.yml
+
+ecosystem.config.js

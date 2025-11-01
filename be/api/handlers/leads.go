@@ -24,7 +24,13 @@ func (handler *LeadsHandler) GetLeads(ginContext *gin.Context) {
 
 	result, err := gorm.G[models.LeadsData](handler.db).Find(ctx)
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			ginContext.JSON(http.StatusNotFound, gin.H{"error": "No leads found"})
+			return
+		}
+
 		ginContext.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve leads"})
+		return
 	}
 
 	leads = result
@@ -45,7 +51,13 @@ func (handler *LeadsHandler) GetLead(ginContext *gin.Context) {
 
 	result, err := gorm.G[models.LeadsData](handler.db).Where("id = ?", id).First(ctx)
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			ginContext.JSON(http.StatusNotFound, gin.H{"error": "No lead found with ID"})
+			return
+		}
+
 		ginContext.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve lead with id"})
+		return
 	}
 
 	lead = result
